@@ -9,6 +9,10 @@ trigger:
 pool:
   # vmImage: ubuntu-latest
   name: Test Agent
+  
+  #pipeline > Stages > Jobs > Tasks(Steps)
+  
+  
 
 steps:
 - script: echo Hello, world!
@@ -17,4 +21,5 @@ steps:
 - script: |
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
+    echo more information
   displayName: 'Run a multi-line script'
