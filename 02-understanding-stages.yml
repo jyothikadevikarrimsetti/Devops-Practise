@@ -6,7 +6,7 @@ pool:
    name: Test Agent
 
 stages:
-- stages: Build
+- stage: Build
   jobs:
   - job: FirstJob
     steps:
@@ -14,25 +14,23 @@ stages:
   - job: SecondJob
     steps:
     - bash: echo build SecondJob
-- stages: DevDeploy
+- stage: DevDeploy
   jobs:
   - job: DevDeployJob
     steps:
     - bash: echo DevDeployJob
   
-- stages: QAdeploy
+- stage: QAdeploy
   jobs:
   - job: QADeployJob
     steps:
     - bash: echo QADeployJob 
-- stages: Proddeploy
+- stage: Proddeploy
   jobs:
   - job: ProdDeployJob
     steps:
     - bash: echo ProdDeployJob
 
-steps:
-- script: echo Job1 Step1!
-  displayName: 'Run a one-line script'
+
 #in this we have only one job otherwise we can run multiple jobs we must add stages
 
