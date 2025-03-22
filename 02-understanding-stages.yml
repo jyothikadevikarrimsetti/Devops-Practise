@@ -13,23 +13,27 @@ stages:
     - script: echo build FirstJob
   - job: SecondJob
     steps:
-    - script: echo build SecondJob
+    - script: echo Build SecondJob
 - stage: DevDeploy
+  dependsOn: Build
   jobs:
   - job: DevDeployJob
     steps:
     - script: echo DevDeployJob
-  
-- stage: QAdeploy
+- stage: QADeploy
+  dependsOn: Build
   jobs:
-  - job: QADeployJob
-    steps:
-    - script: echo QADeployJob 
-- stage: Proddeploy
+    - job: QADeployJob
+      steps:
+      - script: echo QADeployJob
+- stage: ProdDeploy
+  dependsOn:
+  - DevDeploy
+  - QADeploy
   jobs:
-  - job: ProdDeployJob
-    steps:
-    - script: echo ProdDeployJobs
+    - job: ProdDeployJob
+      steps:
+      - script: echo ProdDeployJob
 
 
 #in this we have only one job otherwise we can run multiple jobs we must add stages
