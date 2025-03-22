@@ -28,31 +28,36 @@ stages:
           **/*.yaml
           **/*.tf
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
-  - job: SecondJob
-    steps:
-    - script: echo Build SecondJob
-- stage: DevDeploy
-  variables:
-    environment: Dev
-  dependsOn: Build
-  jobs:
-  - job: DevDeployJob
-    steps:
-    - script: echo $(environment)DeployJob
-- stage: QADeploy
-  dependsOn: Build
-  jobs:
-    - job: QADeployJob
-      steps:
-      - script: echo $(environment)DeployJob
-- stage: ProdDeploy
-  dependsOn:
-  - DevDeploy
-  - QADeploy
-  jobs:
-    - job: ProdDeployJob
-      steps:
-      - script: echo ProdDeployJob
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+#   - job: SecondJob
+#     steps:
+#     - script: echo Build SecondJob
+# - stage: DevDeploy
+#   variables:
+#     environment: Dev
+#   dependsOn: Build
+#   jobs:
+#   - job: DevDeployJob
+#     steps:
+#     - script: echo $(environment)DeployJob
+# - stage: QADeploy
+#   dependsOn: Build
+#   jobs:
+#     - job: QADeployJob
+#       steps:
+#       - script: echo $(environment)DeployJob
+# - stage: ProdDeploy
+#   dependsOn:
+#   - DevDeploy
+#   - QADeploy
+#   jobs:
+#     - job: ProdDeployJob
+#       steps:
+#       - script: echo ProdDeployJob
 
 
 #in this we have only one job otherwise we can run multiple jobs we must add stages
