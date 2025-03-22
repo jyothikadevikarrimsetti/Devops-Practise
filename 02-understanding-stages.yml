@@ -10,26 +10,26 @@ stages:
   jobs:
   - job: FirstJob
     steps:
-    - bash: echo build FirstJob
+    - script: echo build FirstJob
   - job: SecondJob
     steps:
-    - bash: echo build SecondJob
+    - script: echo build SecondJob
 - stage: DevDeploy
   jobs:
   - job: DevDeployJob
     steps:
-    - bash: echo DevDeployJob
+    - script: echo DevDeployJob
   
 - stage: QAdeploy
   jobs:
   - job: QADeployJob
     steps:
-    - bash: echo QADeployJob 
+    - script: echo QADeployJob 
 - stage: Proddeploy
   jobs:
   - job: ProdDeployJob
     steps:
-    - bash: echo ProdDeployJob
+    - script: echo ProdDeployJob
 
 
 #in this we have only one job otherwise we can run multiple jobs we must add stages
