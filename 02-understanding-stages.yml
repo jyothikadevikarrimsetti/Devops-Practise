@@ -12,6 +12,22 @@ stages:
     steps:
     - script: echo build FirstJob\
     - script: echo $(pipelineLevelVariable)
+    - script: echo $(Build.BuildNumber)
+    - script: echo $(Build.BuildId)
+    - script: echo $(Build.SourceBranchName)
+    - script: echo $(Build.SourceDirectory)
+    - script: echo $(System.DefaultWorkingDirectory)
+    - script: dir /s "$(System.DefaultWorkingDirectory)"
+    - script: echo $(Build.ArtifactStagingDirectory)
+    - script: java --version
+    - script: dir /s "$(Build.ArtifactStagingDirectory)"
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(System.DefaultWorkingDirectory)'
+        Contents: |
+          **/*.yaml
+          **/*.tf
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
   - job: SecondJob
     steps:
     - script: echo Build SecondJob
