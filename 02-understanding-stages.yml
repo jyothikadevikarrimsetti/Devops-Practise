@@ -29,7 +29,7 @@ stages:
   jobs:
   - job: ProdDeployJob
     steps:
-    - script: echo ProdDeployJob
+    - script: echo ProdDeployJobs
 
 
 #in this we have only one job otherwise we can run multiple jobs we must add stages
