@@ -1,0 +1,28 @@
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      # vmImage: ubuntu-latest
+      name: Test Agent
+    steps:
+      - task: Docker@2
+        inputs:
+          containerRegistry: 'jyothika-docker-hub'
+          repository: 'jyothika2832/currency-exchange-devops'
+          command: 'buildAndPush'
+          Dockerfile: '**/DevopsStartPipeline/Dockerfile'
+          tags: '$(tag)'
+          
