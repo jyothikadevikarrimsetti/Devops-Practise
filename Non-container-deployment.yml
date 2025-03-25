@@ -20,6 +20,11 @@ stages:
         goals: 'package'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        javaHomeOption: 'JDKVersion'
+        mavenVersionOption: 'Default'
+        mavenAuthenticateFeed: false
+        effectivePomSkip: false
+        sonarQubeRunAnalysis: false
 
     - task: CopyFiles@2
       inputs:
@@ -48,14 +53,4 @@ stages:
         azureSubscription: 'azure-resource-manager-service-connection'  # Use your actual Azure service connection name
         appName: 'mywebappxyz'  # Replace with your Azure App Service name
         appType: 'webApp'
-- task: Maven@3
-  inputs:
-    mavenPomFile: 'DevopsStartPipeline/pom.xml'
-    publishJUnitResults: true
-    testResultsFiles: '**/surefire-reports/TEST-*.xml'
-    javaHomeOption: 'JDKVersion'
-    mavenVersionOption: 'Default'
-    mavenAuthenticateFeed: false
-    effectivePomSkip: false
-    sonarQubeRunAnalysis: false
-        package: '$(Pipeline.Workspace)/drop/*.jar'
+        package: '$(Pipeline.Workspace)/drop/*.jar'  # Moved this under AzureWebApp@1 correctly
