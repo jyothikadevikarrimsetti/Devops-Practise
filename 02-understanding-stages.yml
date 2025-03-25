@@ -3,7 +3,8 @@ trigger:
 - main
 
 pool:
-   name: Test Agent
+  #  name: Test Agent
+  vm-image: "ubuntu-latest"
 
 stages:
 - stage: Build
@@ -20,7 +21,7 @@ stages:
     - script: dir /s "$(System.DefaultWorkingDirectory)"
     - script: echo $(Build.ArtifactStagingDirectory)
     - script: java --version
-    - script: dir /s "$(Build.ArtifactStagingDirectory)"
+    - script: ls -R "$(Build.ArtifactStagingDirectory)"
     - task: CopyFiles@2
       inputs:
         SourceFolder: '$(System.DefaultWorkingDirectory)'
