@@ -15,8 +15,8 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      # vmImage: ubuntu-latest
-      name: Test Agent
+      vmImage: ubuntu-latest
+      # name: Test Agent
     steps:
       - task: Docker@2
         inputs:
