@@ -1,0 +1,61 @@
+trigger:
+- main  # Change if your default branch is different
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  artifactName: 'drop'
+
+stages:
+- stage: Build
+  displayName: 'Build and Package'
+  jobs:
+  - job: Build
+    displayName: 'Build Project'
+    steps:
+    - task: Maven@3
+      inputs:
+        mavenPomFile: 'DevopsStartPipeline/pom.xml'  # Adjust the path if needed
+        goals: 'package'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)/DevopsStartPipeline/target'
+        Contents: '*.jar'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: '$(artifactName)'
+
+- stage: Deploy
+  displayName: 'Deploy to Azure App Service'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy to Azure'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        artifactName: '$(artifactName)'
+        downloadPath: '$(Pipeline.Workspace)'
+
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'azure-resource-manager-service-connection'  # Use your actual Azure service connection name
+        appName: 'mywebappxyz'  # Replace with your Azure App Service name
+        appType: 'webApp'
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'DevopsStartPipeline/pom.xml'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    javaHomeOption: 'JDKVersion'
+    mavenVersionOption: 'Default'
+    mavenAuthenticateFeed: false
+    effectivePomSkip: false
+    sonarQubeRunAnalysis: false
+        package: '$(Pipeline.Workspace)/drop/*.jar'
