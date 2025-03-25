@@ -7,8 +7,8 @@ trigger:
 - main
 
 pool:
-  # vmImage: ubuntu-latest
-  name: Test Agent
+  vmImage: ubuntu-latest
+  # name: Test Agent
   
   #pipeline > Stages > Jobs > Tasks(Steps)
   
