@@ -47,11 +47,9 @@ stages:
             --auth-mode login
       displayName: 'Create Azure Resources'
     - task: DownloadSecureFile@1
-      name: publickey
-    - task: DownloadSecureFile@1
       inputs:
         secureFile: 'azure_rsa_jyo.pub'
-        retryCount: '5'
+        retryCount: '8'
 
 - stage: Terraform
   jobs:
