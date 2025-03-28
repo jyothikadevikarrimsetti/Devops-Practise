@@ -56,7 +56,6 @@ stages:
     - task: KubernetesManifest@1
       inputs:
             action: 'deploy'
-            connectionType: 'kubernetesServiceConnection'
             kubernetesServiceConnection: 'azure-kuberentes-connection'
             namespace: 'default'
             manifests: '$(System.ArtifactsDirectory)/DevopsStartPipeline/configuration/kubernetes/deployment.yaml'
