@@ -1,0 +1,78 @@
+
+# Starter pipeline
+trigger:
+- main
+pool:
+  vmImage: ubuntu-latest  # Using Microsoft-hosted Ubuntu agent
+stages:
+- stage: Setup
+  jobs:
+  - job: AzureSetup
+    steps:
+    - task: AzureCLI@2
+      inputs:
+        azureSubscription: 'azure-resource-manager-service-connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Logging into Azure..."
+          az account show --output table
+          echo "Checking if resource group exists..."
+          if ! az group show --name terraform-backend-rg --output none; then
+            echo "Resource group not found. Creating..."
+            az group create --name terraform-backend-rg --location westeurope
+          else
+            echo "Resource group exists."
+          fi
+          echo "Checking if storage account exists..."
+          if ! az storage account show --name storageaccjimsonxyz --resource-group terraform-backend-rg --output none; then
+            echo "Storage account not found. Creating..."
+            az storage account create \
+              --name storageaccjimsonxyz \
+              --resource-group terraform-backend-rg \
+              --sku Standard_RAGRS \
+              --kind StorageV2 \
+              --location westeurope \
+              --encryption-services blob \
+              --https-only true \
+              --allow-blob-public-access false \
+              --min-tls-version TLS1_2
+          else
+            echo "Storage account exists."
+          fi
+          echo "Creating storage container if it doesn't exist..."
+          az storage container create \
+            --name storageaccjimsoncontainer \
+            --account-name storageaccjimsonxyz \
+            --auth-mode login
+      displayName: 'Create Azure Resources'
+    - task: DownloadSecureFile@1
+      name: publickey
+    - task: DownloadSecureFile@1
+      inputs:
+        secureFile: 'azure_rsa_jyo.pub'
+        retryCount: '5'
+
+- stage: Terraform
+  jobs:
+  - job: TerraformJob
+    steps:
+    - task: TerraformCLI@2
+      inputs:
+        command: 'init'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/configuration/iaac/azure/kubernetes'
+        commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+        backendType: 'azurerm'
+        backendServiceArm: 'azure-resource-manager-service-connection'
+        backendAzureRmTenantId: '4d143b55-605d-4af2-a581-12ee448bba20'
+        backendAzureRmSubscriptionId: 'fbccdf0c-3db4-454b-a6f3-0713e306b7f5'
+        backendAzureRmResourceGroupName: 'terraform-backend-rg'
+        backendAzureRmResourceGroupLocation: 'westeurope'
+        backendAzureRmStorageAccountName: 'storageaccjimsonxyz'
+        backendAzureRmContainerName: 'storageaccjimsoncontainer'
+        backendAzureRmKey: 'kubernetes-dev.tfstate'
+        allowTelemetryCollection: true
+    - script: |
+        echo "Add other tasks to build, test, and deploy your project."
+        echo "See https://aka.ms/yaml"
+      displayName: 'Run a multi-line script'
