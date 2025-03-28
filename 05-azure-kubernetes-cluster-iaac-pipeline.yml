@@ -1,81 +1,69 @@
-
-# Starter pipeline
 trigger:
 - main
 pool:
-  vmImage: ubuntu-latest  # Using Microsoft-hosted Ubuntu agent
+  vmImage: ubuntu-latest
+variables:
+  TF_WORKING_DIR: '$(System.DefaultWorkingDirectory)/DevopsStartPipeline/configuration/iaac/azure/kubernetes'
+  CLEAN_KEY_PATH: '$(Pipeline.Workspace)/sshkeys/cleaned_key.pub'
 stages:
-- stage: Setup
+- stage: Deploy
   jobs:
-  - job: AzureSetup
+  - job: TerraformDeploy
     steps:
-    - task: AzureCLI@2
-      inputs:
-        azureSubscription: 'azure-resource-manager-service-connection'
-        scriptType: 'bash'
-        scriptLocation: 'inlineScript'
-        inlineScript: |
-          echo "Logging into Azure..."
-          az account show --output table
-          echo "Checking if resource group exists..."
-          if ! az group show --name terraform-backend-rg --output none; then
-            echo "Resource group not found. Creating..."
-            az group create --name terraform-backend-rg --location westeurope
-          else
-            echo "Resource group exists."
-          fi
-          echo "Checking if storage account exists..."
-          if ! az storage account show --name storageaccjimsonxyz --resource-group terraform-backend-rg --output none; then
-            echo "Storage account not found. Creating..."
-            az storage account create \
-              --name storageaccjimsonxyz \
-              --resource-group terraform-backend-rg \
-              --sku Standard_RAGRS \
-              --kind StorageV2 \
-              --location westeurope \
-              --encryption-services blob \
-              --https-only true \
-              --allow-blob-public-access false \
-              --min-tls-version TLS1_2
-          else
-            echo "Storage account exists."
-          fi
-          echo "Creating storage container if it doesn't exist..."
-          az storage container create \
-            --name storageaccjimsoncontainer \
-            --account-name storageaccjimsonxyz \
-            --auth-mode login
-      displayName: 'Create Azure Resources'
+    # 1. Download the SSH key
     - task: DownloadSecureFile@1
       name: publickey
       inputs:
         secureFile: 'azure_rsa_jyo.pub'
-        retryCount: '8'
-
-- stage: Terraform
-  jobs:
-  - job: TerraformJob
-    steps:
+    
+    # 2. Process the SSH key
+    - bash: |
+        # Create directory for the key
+        mkdir -p $(Pipeline.Workspace)/sshkeys
+        
+        # Clean and validate the key
+        PUBLIC_KEY_CONTENT=$(cat $(publickey.secureFilePath) | tr -d '\r\n' | awk '{$1=$1};1')
+        
+        # Verify key format
+        if [[ ! "$PUBLIC_KEY_CONTENT" =~ ^ssh-rsa\ [A-Za-z0-9+/]+ ]]; then
+          echo "##vso[task.logissue type=error]Invalid SSH key format"
+          exit 1
+        fi
+        
+        # Save to file (for reference)
+        echo "$PUBLIC_KEY_CONTENT" > $(CLEAN_KEY_PATH)
+        
+        # Set variable for Terraform
+        echo "##vso[task.setvariable variable=SSH_PUBLIC_KEY]$PUBLIC_KEY_CONTENT"
+        
+        # Debug output
+        echo "Using SSH key (first 30 chars): ${PUBLIC_KEY_CONTENT:0:30}..."
+        echo "Key file created at: $(CLEAN_KEY_PATH)"
+        ls -la $(CLEAN_KEY_PATH)
+      displayName: 'Prepare SSH Key'
+    # 3. Verify key is available
+    - bash: |
+        echo "=== SSH KEY VERIFICATION ==="
+        echo "Using key content:"
+        echo "$(SSH_PUBLIC_KEY:0:30)..."  # Show first 30 chars
+        echo "Key file exists: $(if [ -f "$(CLEAN_KEY_PATH)" ]; then echo "YES"; else echo "NO"; fi)"
+      displayName: 'Verify SSH Key'
+    # 4. Terraform Init
     - task: TerraformCLI@2
       inputs:
         command: 'init'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/DevopsStartPipeline/configuration/iaac/azure/kubernetes'
-        # commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+        workingDirectory: '$(TF_WORKING_DIR)'
         backendType: 'azurerm'
         backendServiceArm: 'azure-resource-manager-service-connection'
-        backendAzureRmTenantId: '4d143b55-605d-4af2-a581-12ee448bba20'
-        backendAzureRmSubscriptionId: 'fbccdf0c-3db4-454b-a6f3-0713e306b7f5'
         backendAzureRmResourceGroupName: 'terraform-backend-rg'
-        backendAzureRmResourceGroupLocation: 'westeurope'
         backendAzureRmStorageAccountName: 'storageaccjimsonxyz'
         backendAzureRmContainerName: 'storageaccjimsoncontainer'
         backendAzureRmKey: 'kubernetes-dev.tfstate'
-        allowTelemetryCollection: true
+    # 5. Terraform Apply
     - task: TerraformCLI@2
       inputs:
         command: 'apply'
-        workingDirectory: '$(System.DefaultWorkingDirectory)/DevopsStartPipeline/configuration/iaac/azure/kubernetes'
+        workingDirectory: '$(TF_WORKING_DIR)'
         environmentServiceName: 'azure-resource-manager-service-connection'
-        commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+        commandOptions: '-auto-approve -var="client_id=$(client_id)" -var="client_secret=$(client_secret)" -var="ssh_public_key=$(CLEAN_KEY_PATH)" -var="node_count=2"'
         allowTelemetryCollection: true
-        
