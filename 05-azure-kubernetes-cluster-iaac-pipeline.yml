@@ -60,7 +60,7 @@ stages:
       inputs:
         command: 'init'
         workingDirectory: '$(System.DefaultWorkingDirectory)/DevopsStartPipeline/configuration/iaac/azure/kubernetes'
-        commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
+        # commandOptions: '-var client_id=$(client_id) -var client_secret=$(client_secret) -var ssh_public_key=$(publickey.secureFilePath)'
         backendType: 'azurerm'
         backendServiceArm: 'azure-resource-manager-service-connection'
         backendAzureRmTenantId: '4d143b55-605d-4af2-a581-12ee448bba20'
