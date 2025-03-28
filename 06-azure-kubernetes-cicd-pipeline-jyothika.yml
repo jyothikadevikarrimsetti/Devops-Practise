@@ -1,0 +1,71 @@
+trigger:
+- main
+# Stage 1
+# Build docker image 
+# Publish the K8S Files
+
+resources:
+- repo: self
+
+variables:
+  tag: 129  #'$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: ubuntu-latest
+      # name: Test Agent
+    steps:
+      # - task: Docker@2
+      #   inputs:
+      #     containerRegistry: 'jyothika-docker-hub'
+      #     repository: 'jyothika2832/currency-exchange-devops'
+      #     command: 'buildAndPush'
+      #     Dockerfile: '**/DevopsStartPipeline/Dockerfile'
+      #     tags: '$(tag)'
+      - task: CopyFiles@2
+        inputs:
+          SourceFolder: '$(System.DefaultWorkingDirectory)'
+          Contents: '**/*.yaml'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'manifests'
+          publishLocation: 'Container'  # Stage 1 is done 
+          
+- stage: Deploy
+  displayName: Deploy image
+  jobs:
+  - job: Deploy
+    displayName: Deploy
+    pool:
+      vmImage: ubuntu-latest
+      # name: Test Agent
+    steps:  
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'current'
+        artifactName: 'manifests'
+        itemPattern: '**/*,yaml'
+        targetPath: '$(System.ArtifactsDirectory)'
+    - task: KubernetesManifest@1
+      inputs:
+            action: 'deploy'
+            connectionType: 'kubernetesServiceConnection'
+            kubernetesServiceConnection: 'azure-kuberentes-connection'
+            namespace: 'default'
+            manifests: '$(System.ArtifactsDirectory)/DevopsStartPipeline/configuration/kubernetes/deployment.yaml'
+            containers: 'jyothika2832/currency-exchange-devops:$(tag)'
+
+
+# Stage 2
+# Build docker image 
+# Deploy to K8S Cluster with Docker Image
+
+
+
